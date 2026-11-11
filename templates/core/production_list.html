@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Production log</h1><p>Shift-wise output and waste from spinning, weaving and finishing</p></div>
+  <div class="page-actions"><a class="btn btn-primary" href="{% url 'production_create' %}"><i class="bi bi-plus-lg"></i>Add production entry</a></div>
+</div>
+<div class="panel">
+  {% include "partials/_toolbar.html" with placeholder="Search by order, fabric or operator" show_date=True %}
+  {% if object_list %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Date</th><th>Order</th><th>Stage</th><th>Machine</th><th>Shift</th><th class="num">Output</th><th class="num">Waste</th><th>Operator</th><th></th></tr></thead>
+    <tbody>
+    {% for l in object_list %}
+      <tr>
+        <td>{{ l.date|date:"d M Y" }}</td>
+        <td><a class="strong" href="{{ l.order.get_absolute_url }}">{{ l.order.order_no }}</a><span class="sub">{{ l.order.product }}</span></td>
+        <td><span class="tag plain {{ l.stage }}">{{ l.get_stage_display }}</span></td>
+        <td>{{ l.machine.code|default:"–" }}</td>
+        <td>{{ l.shift }}</td>
+        <td class="num strong">{{ l.quantity|num:0 }} {{ l.unit }}</td>
+        <td class="num">{{ l.waste|num:1 }} {{ l.unit }}</td>
+        <td>{{ l.operator|default:"–" }}</td>
+        <td class="actions">{% url 'production_update' l.pk as e %}{% url 'production_delete' l.pk as d %}{% include "partials/_row_actions.html" with edit=e delete=d %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "partials/_pager.html" %}
+  {% else %}{% include "partials/_empty.html" with icon="bi-diagram-3" title="No production entries found" text="Record each shift's output so targets and orders update automatically." url=request.path|add:"new/" action="Add production entry" %}{% endif %}
+</div>
+{% endblock %}

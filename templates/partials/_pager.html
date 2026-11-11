@@ -1,0 +1,15 @@
+{% load ui %}
+{% if is_paginated %}
+<div class="pager">
+  <span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+  <div class="pages">
+    <a class="{% if not page_obj.has_previous %}off{% endif %}" href="{% if page_obj.has_previous %}?{% url_replace page=page_obj.previous_page_number %}{% else %}#{% endif %}" aria-label="Previous page"><i class="bi bi-chevron-left"></i></a>
+    {% for n in paginator.page_range %}
+      {% if n == page_obj.number %}<span class="cur">{{ n }}</span>
+      {% elif n == 1 or n == paginator.num_pages or n >= page_obj.number|add:'-1' and n <= page_obj.number|add:'1' %}<a href="?{% url_replace page=n %}">{{ n }}</a>
+      {% elif n == page_obj.number|add:'-2' or n == page_obj.number|add:'2' %}<span class="px-1 text-muted">…</span>{% endif %}
+    {% endfor %}
+    <a class="{% if not page_obj.has_next %}off{% endif %}" href="{% if page_obj.has_next %}?{% url_replace page=page_obj.next_page_number %}{% else %}#{% endif %}" aria-label="Next page"><i class="bi bi-chevron-right"></i></a>
+  </div>
+</div>
+{% endif %}

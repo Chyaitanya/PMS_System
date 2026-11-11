@@ -1,0 +1,6 @@
+<div class="empty">
+  <i class="bi {{ icon|default:'bi-inbox' }}"></i>
+  <h3>{{ title }}</h3>
+  <p class="mb-3">{{ text }}</p>
+  {% if url %}<a class="btn btn-primary btn-sm" href="{{ url }}"><i class="bi bi-plus-lg"></i>{{ action }}</a>{% endif %}
+</div>

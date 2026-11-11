@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Reports</h1><p>Choose a report and date range, then print it or export to CSV</p></div>
+  <div class="page-actions">
+    <button class="btn btn-outline-secondary" type="button" onclick="window.print()"><i class="bi bi-printer"></i>Print</button>
+    <a class="btn btn-primary" href="?type={{ kind }}&start={{ start|date:'Y-m-d' }}&end={{ end|date:'Y-m-d' }}&export=csv"><i class="bi bi-download"></i>Export CSV</a>
+  </div>
+</div>
+
+<nav class="report-tabs">
+  {% for key, label in report_types %}<a class="{% if key == kind %}active{% endif %}" href="?type={{ key }}&start={{ start|date:'Y-m-d' }}&end={{ end|date:'Y-m-d' }}">{{ label }}</a>{% endfor %}
+</nav>
+
+<div class="panel">
+  {% if kind != 'stock' %}
+  <form class="toolbar no-print" method="get">
+    <input type="hidden" name="type" value="{{ kind }}">
+    <label class="small text-muted" for="start">From</label>
+    <input class="form-control" id="start" type="date" name="start" value="{{ start|date:'Y-m-d' }}">
+    <label class="small text-muted" for="end">To</label>
+    <input class="form-control" id="end" type="date" name="end" value="{{ end|date:'Y-m-d' }}">
+    <button class="btn btn-outline-secondary btn-sm" type="submit">Update</button>
+    <span class="ms-2 d-flex gap-1 flex-wrap">{% for label, d in presets %}<a class="btn btn-ghost btn-sm" href="?type={{ kind }}&start={{ d|date:'Y-m-d' }}&end={{ today|date:'Y-m-d' }}">{{ label }}</a>{% endfor %}</span>
+  </form>
+  {% endif %}
+  <div class="print-title px-3 pt-3"><h2>{{ kind_label }}</h2>{% if kind != 'stock' %}<div>{{ start|date:"d M Y" }} to {{ end|date:"d M Y" }}</div>{% endif %}</div>
+  <div class="summary-row">
+    {% for label, value in summary %}<div>{{ label }}<b>{{ value }}</b></div>{% endfor %}
+    <div class="ms-auto text-end">{{ rows|length }} row{{ rows|length|pluralize }}</div>
+  </div>
+  {% if rows %}
+  <div class="table-wrap"><table class="data data-compact">
+    <thead><tr>{% for h in headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for row in rows %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}
+  <div class="empty"><i class="bi bi-file-earmark-x"></i><h3>Nothing to report for these dates</h3><p class="mb-0">Try a wider date range.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

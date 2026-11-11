@@ -1,0 +1,83 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ page_title|default:"Dashboard" }}{% endblock %} · Smart Textile PMS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231a2142'/><path d='M6 10h20M6 16h20M6 22h20M10 6v20M16 6v20M22 6v20' stroke='white' stroke-width='2'/></svg>">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <a class="brand" href="{% url 'dashboard' %}">
+      <span class="brand-mark"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+      <span><span class="brand-name d-block">Textile PMS</span><span class="brand-sub">Production management</span></span>
+    </a>
+    <nav>
+      <div class="nav-group">
+        <a class="side-link {% if section == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i>Dashboard</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">Production</div>
+        <a class="side-link {% if section == 'orders' %}active{% endif %}" href="{% url 'order_list' %}"><i class="bi bi-clipboard2-check"></i>Orders</a>
+        <a class="side-link {% if section == 'production' %}active{% endif %}" href="{% url 'production_list' %}"><i class="bi bi-diagram-3"></i>Production log</a>
+        <a class="side-link {% if section == 'targets' %}active{% endif %}" href="{% url 'target_list' %}"><i class="bi bi-bullseye"></i>Daily targets</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">Resources</div>
+        <a class="side-link {% if section == 'inventory' %}active{% endif %}" href="{% url 'material_list' %}"><i class="bi bi-box-seam"></i>Inventory{% if nav_low_stock %}<span class="side-count" title="Items below reorder level">{{ nav_low_stock }}</span>{% endif %}</a>
+        <a class="side-link {% if section == 'machines' %}active{% endif %}" href="{% url 'machine_list' %}"><i class="bi bi-gear-wide-connected"></i>Machines</a>
+        <a class="side-link {% if section == 'downtime' %}active{% endif %}" href="{% url 'downtime_list' %}"><i class="bi bi-exclamation-octagon"></i>Downtime{% if nav_down_count %}<span class="side-count" title="Machines down now">{{ nav_down_count }}</span>{% endif %}</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">Quality and reporting</div>
+        <a class="side-link {% if section == 'defects' %}active{% endif %}" href="{% url 'defect_list' %}"><i class="bi bi-bug"></i>Defects</a>
+        <a class="side-link {% if section == 'reports' %}active{% endif %}" href="{% url 'reports' %}"><i class="bi bi-file-earmark-bar-graph"></i>Reports</a>
+      </div>
+    </nav>
+    <div class="side-foot">Spinning → Weaving → Finishing</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-ghost menu-btn" id="menuBtn" type="button" aria-label="Open menu"><i class="bi bi-list fs-4"></i></button>
+      <span class="crumb">{{ page_title }}</span>
+      <span class="today d-none d-md-inline">{% now "l, j F Y" %}</span>
+      <span class="spacer"></span>
+      {% if user.is_authenticated %}
+      <div class="dropdown">
+        <button class="user-chip" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="avatar">{{ user.username|slice:":1"|upper }}</span><span class="uname">{{ user.get_full_name|default:user.username }}</span><i class="bi bi-chevron-down small text-muted"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          {% if user.is_staff %}<li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="bi bi-shield-lock me-2"></i>Admin site</a></li><li><hr class="dropdown-divider"></li>{% endif %}
+          <li><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="dropdown-item" type="submit"><i class="bi bi-box-arrow-right me-2"></i>Sign out</button></form></li>
+        </ul>
+      </div>
+      {% endif %}
+    </header>
+
+    {% if messages %}
+    <div class="toasts" role="status" aria-live="polite">
+      {% for m in messages %}
+      <div class="toast-msg {{ m.tags }}">
+        <i class="bi {% if m.tags == 'error' %}bi-x-circle-fill{% elif m.tags == 'warning' %}bi-exclamation-triangle-fill{% else %}bi-check-circle-fill{% endif %}"></i>
+        <span>{{ m }}</span><button type="button" aria-label="Dismiss">&times;</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

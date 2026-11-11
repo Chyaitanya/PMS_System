@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><div><h1>Delete this {{ object_label }}?</h1></div></div>
+<form method="post" class="panel form-card">
+  {% csrf_token %}
+  <div class="panel-body">
+    <p class="mb-2"><strong>{{ object }}</strong></p>
+    <p class="text-muted mb-0">This removes the {{ object_label }} and anything recorded against it. You cannot undo this.</p>
+  </div>
+  <div class="form-foot">
+    <button class="btn btn-danger" type="submit"><i class="bi bi-trash3"></i>Delete {{ object_label }}</button>
+    <a class="btn btn-outline-secondary" href="{{ back_url }}">Keep it</a>
+  </div>
+</form>
+{% endblock %}

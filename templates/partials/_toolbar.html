@@ -1,0 +1,16 @@
+<form class="toolbar" method="get" role="search">
+  {% if not hide_search %}<div class="search">
+    <i class="bi bi-search"></i>
+    <input class="form-control" type="search" name="q" value="{{ q }}" placeholder="{{ placeholder|default:'Search' }}" aria-label="Search">
+  </div>{% endif %}
+  {% for f in filters %}
+  <select class="form-select" name="{{ f.param }}" aria-label="{{ f.label }}" onchange="this.form.submit()">
+    <option value="">{{ f.label }}</option>
+    {% for value, label in f.choices %}<option value="{{ value }}" {% if f.current == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  {% endfor %}
+  {% if show_date %}<input class="form-control" type="date" name="date" value="{{ date_filter }}" aria-label="Date" onchange="this.form.submit()">{% endif %}
+  {% if not hide_search %}<button class="btn btn-outline-secondary btn-sm" type="submit">Search</button>{% endif %}
+  {% if has_filters %}<a class="btn btn-ghost btn-sm" href="?">Clear</a>{% endif %}
+  <span class="count">{{ total }} record{{ total|pluralize }}</span>
+</form>

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load static ui %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Today on the floor</h1>
+    <p>Output so far against the daily target for each stage</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-outline-secondary" href="{% url 'downtime_create' %}"><i class="bi bi-exclamation-octagon"></i>Log downtime</a>
+    <a class="btn btn-primary" href="{% url 'production_create' %}"><i class="bi bi-plus-lg"></i>Add production entry</a>
+  </div>
+</div>
+
+<section class="line" aria-label="Production line today">
+  {% for s in line %}
+  <article class="stage-card" data-stage="{{ s.stage }}">
+    <div class="stage-name">
+      <span><span class="dot"></span>{{ s.label }}</span>
+      {% if s.machines %}
+        <span class="tag {% if s.down %}bad{% else %}good{% endif %}">{{ s.running }}/{{ s.machines }} running</span>
+      {% endif %}
+    </div>
+    <div class="stage-figure">
+      <span class="big">{{ s.actual|num:0 }}</span>
+      <span class="of">{{ s.unit }}{% if s.target %} of {{ s.target|num:0 }} {{ s.unit }}{% endif %}</span>
+    </div>
+    <div class="meter" role="progressbar" aria-valuenow="{{ s.bar }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ s.label }} progress to target"><span style="width: {{ s.bar }}%"></span></div>
+    <div class="stage-meta">
+      {% if s.target %}<span><b>{{ s.pct }}%</b> of target</span>{% else %}<span>No target set · <a href="{% url 'target_create' %}?stage={{ s.stage }}&date={{ today|date:'Y-m-d' }}">set one</a></span>{% endif %}
+      <span>Waste <b>{{ s.waste|num:1 }} {{ s.unit }}</b></span>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+
+<section class="band" aria-label="Key figures">
+  <div class="band-item">
+    <div class="band-label"><i class="bi bi-clipboard2-check"></i>Orders in progress</div>
+    <div class="band-value">{{ kpis.active_orders }}</div>
+    <div class="band-note {% if kpis.overdue %}bad{% endif %}">{% if kpis.overdue %}{{ kpis.overdue }} past due date{% else %}None past due date{% endif %}</div>
+  </div>
+  <div class="band-item">
+    <div class="band-label"><i class="bi bi-gear-wide-connected"></i>Machines down now</div>
+    <div class="band-value">{{ kpis.machines_down }} <small>of {{ kpis.machines_total }}</small></div>
+    <div class="band-note {% if kpis.machines_down %}bad{% else %}good{% endif %}">{% if kpis.machines_down %}Needs attention{% else %}All machines running{% endif %}</div>
+  </div>
+  <div class="band-item">
+    <div class="band-label"><i class="bi bi-bug"></i>Rejection rate, 30 days</div>
+    <div class="band-value">{{ kpis.reject_rate }}<small>%</small></div>
+    <div class="band-note">{{ kpis.defective30|num:0 }} m defective in total</div>
+  </div>
+  <div class="band-item">
+    <div class="band-label"><i class="bi bi-box-seam"></i>Items to reorder</div>
+    <div class="band-value">{{ kpis.low_stock }}</div>
+    <div class="band-note {% if kpis.low_stock %}bad{% else %}good{% endif %}">{% if kpis.low_stock %}At or below reorder level{% else %}Stock levels healthy{% endif %}</div>
+  </div>
+</section>
+
+<section class="grid-3">
+  <div class="panel">
+    <div class="panel-head"><div><h2>Output, last 14 days</h2><div class="sub">Yarn in kg (right axis), fabric in metres (left axis)</div></div></div>
+    <div class="panel-body"><div class="chart-box tall"><canvas id="trendChart" aria-label="Daily output by stage"></canvas></div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><div><h2>Downtime by reason</h2><div class="sub">Hours, last 30 days</div></div></div>
+    <div class="panel-body"><div class="chart-box tall"><canvas id="downtimeChart" aria-label="Downtime hours by reason"></canvas></div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><div><h2>Defects by type</h2><div class="sub">Metres, last 30 days</div></div></div>
+    <div class="panel-body"><div class="chart-box tall"><canvas id="defectChart" aria-label="Defective fabric by type"></canvas></div></div>
+  </div>
+</section>
+
+<section class="grid-3">
+  <div class="panel">
+    <div class="panel-head"><h2>Orders in progress</h2><a class="panel-link" href="{% url 'order_list' %}">All orders</a></div>
+    {% if orders %}
+    <div class="table-wrap"><table class="data data-compact">
+      <thead><tr><th>Order</th><th>Stage</th><th style="width:26%">Progress</th><th>Due</th></tr></thead>
+      <tbody>
+      {% for o in orders %}
+        <tr>
+          <td><a class="strong" href="{{ o.get_absolute_url }}">{{ o.order_no }}</a><span class="sub">{{ o.product }}</span></td>
+          <td><span class="tag plain {{ o.current_stage }}">{{ o.get_current_stage_display }}</span></td>
+          <td><div class="d-flex align-items-center gap-2"><div class="meter sm flex-grow-1" style="--c: var(--primary)"><span style="width: {{ o.overall_pct }}%"></span></div><span class="small text-muted">{{ o.overall_pct }}%</span></div></td>
+          <td>{{ o.due_date|date:"d M" }}{% if o.is_overdue %} <span class="tag bad plain">Overdue</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<div class="mini-empty">No orders in progress. <a href="{% url 'order_create' %}">Create an order</a></div>{% endif %}
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h2>Machines down</h2><a class="panel-link" href="{% url 'downtime_list' %}">All downtime</a></div>
+    {% if open_downtime %}
+    <ul class="mini-list">
+      {% for d in open_downtime %}
+      <li>
+        <div class="grow"><div class="t">{{ d.machine.code }} · {{ d.machine.name }}</div><div class="s">{{ d.get_category_display }} · down {{ d.duration_display }}</div></div>
+        <form method="post" action="{% url 'downtime_resolve' d.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{% url 'dashboard' %}"><button class="btn btn-outline-secondary btn-sm" type="submit">Resolve</button></form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<div class="mini-empty"><i class="bi bi-check-circle text-success d-block fs-4 mb-1"></i>Every machine is running.</div>{% endif %}
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h2>Low stock</h2><a class="panel-link" href="{% url 'material_list' %}?stock=low">View all</a></div>
+    {% if low_stock_items %}
+    <ul class="mini-list">
+      {% for m in low_stock_items %}
+      <li>
+        <div class="grow"><div class="t">{{ m.name }}</div><div class="s">{{ m.quantity|trim }} {{ m.unit }} left · reorder at {{ m.reorder_level|trim }}</div></div>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'movement_create' m.pk %}?kind=in">Stock in</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<div class="mini-empty"><i class="bi bi-check-circle text-success d-block fs-4 mb-1"></i>No item is below its reorder level.</div>{% endif %}
+  </div>
+</section>
+
+{{ chart_data|json_script:"chart-data" }}
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

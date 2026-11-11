@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+{% with o=object %}
+<div class="page-head">
+  <div><h1>{{ o.order_no }}</h1><p>{{ o.product }}{% if o.customer %} · {{ o.customer }}{% endif %}</p></div>
+  <div class="page-actions">
+    <a class="btn btn-outline-secondary" href="{% url 'order_list' %}"><i class="bi bi-arrow-left"></i>Orders</a>
+    <a class="btn btn-outline-secondary" href="{% url 'order_update' o.pk %}"><i class="bi bi-pencil"></i>Edit</a>
+    {% if o.status != 'completed' and o.status != 'cancelled' %}
+    <form method="post" action="{% url 'order_advance' o.pk %}">{% csrf_token %}
+      <button class="btn btn-primary" type="submit">{% if next_stage %}Move to {{ next_stage|capfirst }}{% else %}Mark completed{% endif %}</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+<div class="detail-grid">
+  <div class="stack">
+    <div class="panel">
+      <div class="panel-head"><h2>Progress by stage</h2><span class="tag {% if o.status == 'completed' %}good{% elif o.status == 'in_progress' %}info{% endif %}">{{ o.get_status_display }}</span></div>
+      <div class="panel-body stage-rows">
+        {% for s in stages %}
+        <div class="stage-row">
+          <div class="name {% if s.stage == o.current_stage and o.status == 'in_progress' %}current{% endif %}">{{ s.label }}</div>
+          <div class="meter" style="margin:0; --c: var(--{{ s.stage }})"><span style="width: {{ s.pct }}%"></span></div>
+          <div class="qty"><b>{{ s.produced|num:0 }}</b> of {{ s.planned|num:0 }} {{ s.unit }} · {{ s.pct }}%</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Recent production entries</h2><a class="panel-link" href="{% url 'production_list' %}?order={{ o.pk }}">All entries</a></div>
+      {% if logs %}
+      <div class="table-wrap"><table class="data data-compact">
+        <thead><tr><th>Date</th><th>Stage</th><th>Machine</th><th>Shift</th><th class="num">Output</th><th class="num">Waste</th></tr></thead>
+        <tbody>{% for l in logs %}<tr><td>{{ l.date|date:"d M Y" }}</td><td><span class="tag plain {{ l.stage }}">{{ l.get_stage_display }}</span></td><td>{{ l.machine.code|default:"–" }}</td><td>{{ l.shift }}</td><td class="num strong">{{ l.quantity|num:0 }} {{ l.unit }}</td><td class="num">{{ l.waste|num:1 }} {{ l.unit }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}{% include "partials/_empty.html" with icon="bi-diagram-3" title="Nothing recorded yet" text="Production entries for this order will appear here." %}{% endif %}
+    </div>
+  </div>
+  <div class="stack">
+    <div class="panel">
+      <div class="panel-head"><h2>Order details</h2></div>
+      <div class="panel-body">
+        <dl class="kv">
+          <dt>Fabric to produce</dt><dd>{{ o.planned_qty|num:0 }} m</dd>
+          <dt>Yarn required</dt><dd>{{ o.yarn_required_kg|num:0 }} kg</dd>
+          <dt>Yarn used</dt><dd>{{ o.yarn.name|default:"–" }}</dd>
+          <dt>Start date</dt><dd>{{ o.start_date|date:"d M Y" }}</dd>
+          <dt>Due date</dt><dd>{{ o.due_date|date:"d M Y" }}{% if o.is_overdue %} <span class="tag bad plain">Overdue</span>{% endif %}</dd>
+          <dt>Current stage</dt><dd>{{ o.get_current_stage_display }}</dd>
+          {% if o.notes %}<dt>Notes</dt><dd class="fw-normal">{{ o.notes }}</dd>{% endif %}
+        </dl>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Defects</h2><a class="panel-link" href="{% url 'defect_create' %}?order={{ o.pk }}">Report defect</a></div>
+      {% if defects %}
+      <ul class="mini-list">{% for d in defects %}<li><div class="grow"><div class="t">{{ d.get_defect_type_display }}</div><div class="s">{{ d.date|date:"d M" }} · {{ d.get_disposition_display }}</div></div><span class="strong">{{ d.quantity|trim }} m</span></li>{% endfor %}</ul>
+      <div class="pager"><span>Total affected</span><b class="text-body">{{ defect_total|num:1 }} m</b></div>
+      {% else %}<div class="mini-empty">No defects reported for this order.</div>{% endif %}
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

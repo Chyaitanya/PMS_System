@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Defects and rejections</h1><p>Defective fabric found at weaving and finishing inspection</p></div>
+  <div class="page-actions"><a class="btn btn-primary" href="{% url 'defect_create' %}"><i class="bi bi-plus-lg"></i>Report defect</a></div>
+</div>
+<div class="panel">
+  <div class="summary-row">
+    <div>Defective, last 30 days<b>{{ summary.total|num:0 }} m</b></div>
+    <div>Rejected / scrapped<b class="{% if summary.scrap %}text-danger{% endif %}">{{ summary.scrap|num:0 }} m</b></div>
+    <div>Sent for rework<b>{{ summary.rework|num:0 }} m</b></div>
+    <div>Downgraded<b>{{ summary.downgrade|num:0 }} m</b></div>
+  </div>
+  {% include "partials/_toolbar.html" with placeholder="Search by order, remarks or inspector" %}
+  {% if object_list %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Date</th><th>Order</th><th>Stage</th><th>Defect</th><th>Severity</th><th>Action</th><th class="num">Fabric</th><th>Machine</th><th></th></tr></thead>
+    <tbody>
+    {% for d in object_list %}
+      <tr>
+        <td>{{ d.date|date:"d M Y" }}</td>
+        <td><a class="strong" href="{{ d.order.get_absolute_url }}">{{ d.order.order_no }}</a></td>
+        <td><span class="tag plain {{ d.stage }}">{{ d.get_stage_display }}</span></td>
+        <td>{{ d.get_defect_type_display }}{% if d.remarks %}<span class="sub">{{ d.remarks }}</span>{% endif %}</td>
+        <td><span class="tag {% if d.severity == 'critical' %}bad{% elif d.severity == 'major' %}warn{% endif %}">{{ d.get_severity_display }}</span></td>
+        <td>{{ d.get_disposition_display }}</td>
+        <td class="num strong">{{ d.quantity|trim }} m</td>
+        <td>{{ d.machine.code|default:"–" }}</td>
+        <td class="actions">{% url 'defect_update' d.pk as e %}{% url 'defect_delete' d.pk as dl %}{% include "partials/_row_actions.html" with edit=e delete=dl %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "partials/_pager.html" %}
+  {% else %}{% include "partials/_empty.html" with icon="bi-bug" title="No defects recorded" text="Report defective fabric to track rejection rates and causes." url=request.path|add:"new/" action="Report defect" %}{% endif %}
+</div>
+{% endblock %}

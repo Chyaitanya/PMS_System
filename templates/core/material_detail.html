@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+{% with m=object %}
+<div class="page-head">
+  <div><h1>{{ m.name }}</h1><p>{{ m.sku }} · {{ m.get_category_display }}</p></div>
+  <div class="page-actions">
+    <a class="btn btn-outline-secondary" href="{% url 'material_list' %}"><i class="bi bi-arrow-left"></i>Inventory</a>
+    <a class="btn btn-outline-secondary" href="{% url 'material_update' m.pk %}"><i class="bi bi-pencil"></i>Edit</a>
+    <a class="btn btn-outline-secondary" href="{% url 'movement_create' m.pk %}?kind=out">Stock out</a>
+    <a class="btn btn-primary" href="{% url 'movement_create' m.pk %}?kind=in"><i class="bi bi-plus-lg"></i>Stock in</a>
+  </div>
+</div>
+<div class="band" style="grid-template-columns: repeat(3, 1fr)">
+  <div class="band-item"><div class="band-label">In stock</div><div class="band-value">{{ m.quantity|trim }} <small>{{ m.unit }}</small></div><div class="band-note {% if m.is_low %}bad{% endif %}">{% if m.is_low %}At or below reorder level{% else %}Above reorder level{% endif %}</div></div>
+  <div class="band-item"><div class="band-label">Reorder level</div><div class="band-value">{{ m.reorder_level|trim }} <small>{{ m.unit }}</small></div><div class="band-note">{{ m.location|default:"No location set" }}</div></div>
+  <div class="band-item"><div class="band-label">Stock value</div><div class="band-value">₹{{ m.stock_value|num:0 }}</div><div class="band-note">at ₹{{ m.cost_per_unit|num:2 }} per {{ m.unit }}</div></div>
+</div>
+<div class="panel">
+  <div class="panel-head"><h2>Movement history</h2><span class="sub">Latest 25</span></div>
+  {% if movements %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Date</th><th>Type</th><th class="num">Quantity</th><th>Reference</th><th>Note</th><th>Recorded by</th></tr></thead>
+    <tbody>
+    {% for mv in movements %}
+      <tr>
+        <td>{{ mv.created_at|date:"d M Y, H:i" }}</td>
+        <td><span class="tag {% if mv.kind == 'in' %}good{% else %}warn{% endif %}">{{ mv.get_kind_display }}</span></td>
+        <td class="num strong">{% if mv.kind == 'in' %}+{% else %}−{% endif %}{{ mv.quantity|trim }} {{ m.unit }}</td>
+        <td>{{ mv.reference|default:"–" }}</td><td>{{ mv.note|default:"–" }}</td><td>{{ mv.created_by.username|default:"–" }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}{% include "partials/_empty.html" with icon="bi-arrow-left-right" title="No movements yet" text="Record stock in when material arrives and stock out when it is issued to production." %}{% endif %}
+</div>
+{% endwith %}
+{% endblock %}

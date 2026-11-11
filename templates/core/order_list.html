@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Production orders</h1><p>Each order moves from spinning to weaving to finishing</p></div>
+  <div class="page-actions"><a class="btn btn-primary" href="{% url 'order_create' %}"><i class="bi bi-plus-lg"></i>New order</a></div>
+</div>
+<div class="panel">
+  {% include "partials/_toolbar.html" with placeholder="Search by order, fabric or customer" %}
+  {% if object_list %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Order</th><th>Customer</th><th class="num">Fabric</th><th>Stage</th><th style="min-width:150px">Progress</th><th>Due</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for o in object_list %}
+      <tr>
+        <td><a class="strong" href="{{ o.get_absolute_url }}">{{ o.order_no }}</a><span class="sub">{{ o.product }}</span></td>
+        <td>{{ o.customer|default:"–" }}</td>
+        <td class="num">{{ o.planned_qty|num:0 }} m</td>
+        <td><span class="tag plain {{ o.current_stage }}">{{ o.get_current_stage_display }}</span></td>
+        <td><div class="d-flex align-items-center gap-2"><div class="meter sm flex-grow-1" style="--c: var(--primary)"><span style="width: {{ o.overall_pct }}%"></span></div><span class="small text-muted" style="width:34px">{{ o.overall_pct }}%</span></div></td>
+        <td>{{ o.due_date|date:"d M Y" }}{% if o.is_overdue %}<span class="sub text-danger">Overdue</span>{% endif %}</td>
+        <td><span class="tag {% if o.status == 'completed' %}good{% elif o.status == 'in_progress' %}info{% elif o.status == 'cancelled' %}bad{% endif %}">{{ o.get_status_display }}</span></td>
+        <td class="actions">{% url 'order_update' o.pk as e %}{% url 'order_delete' o.pk as d %}{% include "partials/_row_actions.html" with edit=e delete=d %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "partials/_pager.html" %}
+  {% else %}{% include "partials/_empty.html" with icon="bi-clipboard2-check" title="No orders found" text="Create an order to start tracking it through the line." url=request.path|add:"new/" action="New order" %}{% endif %}
+</div>
+{% endblock %}

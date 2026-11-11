@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Daily targets</h1><p>Planned output for each stage, compared with what was actually produced</p></div>
+  <div class="page-actions"><a class="btn btn-primary" href="{% url 'target_create' %}"><i class="bi bi-plus-lg"></i>Set target</a></div>
+</div>
+<div class="panel">
+  {% include "partials/_toolbar.html" with hide_search=True %}
+  {% if object_list %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Date</th><th>Stage</th><th class="num">Target</th><th class="num">Actual</th><th style="min-width:180px">Attainment</th><th>Note</th><th></th></tr></thead>
+    <tbody>
+    {% for t in object_list %}
+      <tr>
+        <td class="strong">{{ t.date|date:"D, d M Y" }}</td>
+        <td><span class="tag plain {{ t.stage }}">{{ t.get_stage_display }}</span></td>
+        <td class="num">{{ t.target_qty|num:0 }} {{ t.unit }}</td>
+        <td class="num strong">{{ t.actual|num:0 }} {{ t.unit }}</td>
+        <td><div class="d-flex align-items-center gap-2"><div class="meter sm flex-grow-1 {{ t.pct|pct_tone }}"><span style="width: {% if t.pct > 100 %}100{% else %}{{ t.pct }}{% endif %}%"></span></div><span class="small fw-medium" style="width:40px">{{ t.pct }}%</span></div></td>
+        <td>{{ t.note|default:"–" }}</td>
+        <td class="actions">{% url 'target_update' t.pk as e %}{% url 'target_delete' t.pk as d %}{% include "partials/_row_actions.html" with edit=e delete=d %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "partials/_pager.html" %}
+  {% else %}{% include "partials/_empty.html" with icon="bi-bullseye" title="No targets set" text="Set a daily target per stage to see attainment on the dashboard." url=request.path|add:"new/" action="Set target" %}{% endif %}
+</div>
+{% endblock %}

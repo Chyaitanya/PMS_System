@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div><h1>{{ form_title }}</h1></div>
+</div>
+<form method="post" class="panel form-card" novalidate>
+  {% csrf_token %}
+  <div class="panel-body">
+    {% if form_hint %}<div class="form-hint">{{ form_hint }}</div>{% endif %}
+    {% if form.non_field_errors %}<div class="alert alert-danger py-2 small">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+    <div class="form-grid">
+      {% for field in form %}
+      <div class="{% if field|is_wide %}full{% endif %}">
+        {% if field.field.widget.input_type == 'checkbox' %}
+          <div class="check-row pt-3">{{ field }}<label class="form-label mb-0" for="{{ field.id_for_label }}">{{ field.label }}</label></div>
+        {% else %}
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="text-danger"> *</span>{% endif %}</label>
+          {{ field }}
+        {% endif %}
+        {% for e in field.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="form-foot">
+    <button class="btn btn-primary" type="submit">{{ submit_label|default:"Save" }}</button>
+    <a class="btn btn-outline-secondary" href="{{ back_url }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

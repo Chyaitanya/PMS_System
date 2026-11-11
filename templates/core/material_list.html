@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Inventory</h1><p>Yarn, fabric and raw materials in stock</p></div>
+  <div class="page-actions"><a class="btn btn-primary" href="{% url 'material_create' %}"><i class="bi bi-plus-lg"></i>Add item</a></div>
+</div>
+<div class="panel">
+  <div class="summary-row">
+    <div>Items tracked<b>{{ summary.items }}</b></div>
+    <div>Below reorder level<b class="{% if summary.low %}text-danger{% endif %}">{{ summary.low }}</b></div>
+    <div>Stock value<b>₹{{ summary.value|num:0 }}</b></div>
+  </div>
+  {% include "partials/_toolbar.html" with placeholder="Search by name, code or location" %}
+  {% if object_list %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Item</th><th>Category</th><th style="min-width:170px">In stock</th><th class="num">Reorder level</th><th class="num">Rate</th><th class="num">Value</th><th>Location</th><th></th></tr></thead>
+    <tbody>
+    {% for m in object_list %}
+      <tr>
+        <td><a class="strong" href="{{ m.get_absolute_url }}">{{ m.name }}</a><span class="sub">{{ m.sku }}</span></td>
+        <td><span class="tag plain">{{ m.get_category_display }}</span></td>
+        <td>
+          <div class="d-flex justify-content-between small"><span class="strong">{{ m.quantity|trim }} {{ m.unit }}</span>{% if m.is_low %}<span class="text-danger fw-medium">Reorder</span>{% endif %}</div>
+          <div class="meter sm mt-1 {% if m.is_low %}bad{% else %}good{% endif %}"><span style="width: {{ m.stock_pct }}%"></span></div>
+        </td>
+        <td class="num">{{ m.reorder_level|trim }} {{ m.unit }}</td>
+        <td class="num">₹{{ m.cost_per_unit|num:2 }}</td>
+        <td class="num">₹{{ m.stock_value|num:0 }}</td>
+        <td>{{ m.location|default:"–" }}</td>
+        <td class="actions">
+          <a class="btn btn-outline-secondary btn-sm" href="{% url 'movement_create' m.pk %}">Stock in/out</a>
+          {% url 'material_update' m.pk as e %}{% url 'material_delete' m.pk as d %}{% include "partials/_row_actions.html" with edit=e delete=d %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "partials/_pager.html" %}
+  {% else %}
+    {% include "partials/_empty.html" with icon="bi-box-seam" title="No items found" text="Add yarn, fabric or raw materials to start tracking stock." url=request.path|add:"new/" action="Add item" %}
+  {% endif %}
+</div>
+{% endblock %}

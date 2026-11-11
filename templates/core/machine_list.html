@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Machines</h1><p>Ring frames, looms and finishing machines</p></div>
+  <div class="page-actions"><a class="btn btn-primary" href="{% url 'machine_create' %}"><i class="bi bi-plus-lg"></i>Add machine</a></div>
+</div>
+<div class="panel">
+  {% include "partials/_toolbar.html" with placeholder="Search by code, name or make" %}
+  {% if object_list %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Machine</th><th>Stage</th><th>Make / model</th><th>Status</th><th class="num">Downtime, 30 days</th><th></th></tr></thead>
+    <tbody>
+    {% for m in object_list %}
+      <tr>
+        <td><span class="strong">{{ m.code }}</span><span class="sub">{{ m.name }}</span></td>
+        <td><span class="tag plain {{ m.stage }}">{{ m.get_stage_display }}</span></td>
+        <td>{{ m.make|default:"–" }}</td>
+        <td>{% if m.status == 'Running' %}<span class="tag good">Running</span>{% elif m.status == 'Down' %}<span class="tag bad">Down · {{ m.open_downtime.get_category_display }}</span>{% else %}<span class="tag">Out of service</span>{% endif %}</td>
+        <td class="num">{{ m.down_hours_30 }} h</td>
+        <td class="actions">{% url 'machine_update' m.pk as e %}{% url 'machine_delete' m.pk as d %}{% include "partials/_row_actions.html" with edit=e delete=d %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "partials/_pager.html" %}
+  {% else %}{% include "partials/_empty.html" with icon="bi-gear-wide-connected" title="No machines found" text="Add your machines so downtime and production can be recorded against them." url=request.path|add:"new/" action="Add machine" %}{% endif %}
+</div>
+{% endblock %}

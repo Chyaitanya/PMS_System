@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Machine downtime</h1><p>Stoppages, their causes and how long they lasted</p></div>
+  <div class="page-actions"><a class="btn btn-primary" href="{% url 'downtime_create' %}"><i class="bi bi-plus-lg"></i>Log downtime</a></div>
+</div>
+<div class="panel">
+  <div class="summary-row">
+    <div>Down right now<b class="{% if summary.open %}text-danger{% endif %}">{{ summary.open }}</b></div>
+    <div>Events, last 30 days<b>{{ summary.events }}</b></div>
+    <div>Lost time, last 30 days<b>{{ summary.hours }} h</b></div>
+  </div>
+  {% include "partials/_toolbar.html" with placeholder="Search by machine, reason or reporter" %}
+  {% if object_list %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Machine</th><th>Reason</th><th>Started</th><th>Ended</th><th class="num">Duration</th><th>Reported by</th><th></th></tr></thead>
+    <tbody>
+    {% for d in object_list %}
+      <tr>
+        <td><span class="strong">{{ d.machine.code }}</span><span class="sub">{{ d.machine.name }}</span></td>
+        <td>{{ d.get_category_display }}{% if d.description %}<span class="sub">{{ d.description }}</span>{% endif %}</td>
+        <td>{{ d.started_at|date:"d M Y, H:i" }}</td>
+        <td>{% if d.is_open %}<span class="tag bad">Still down</span>{% else %}{{ d.ended_at|date:"d M Y, H:i" }}{% endif %}</td>
+        <td class="num strong">{{ d.duration_display }}</td>
+        <td>{{ d.reported_by|default:"–" }}</td>
+        <td class="actions">
+          {% if d.is_open %}<form class="d-inline" method="post" action="{% url 'downtime_resolve' d.pk %}">{% csrf_token %}<button class="btn btn-outline-secondary btn-sm" type="submit">Mark resolved</button></form>{% endif %}
+          {% url 'downtime_update' d.pk as e %}{% url 'downtime_delete' d.pk as dl %}{% include "partials/_row_actions.html" with edit=e delete=dl %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "partials/_pager.html" %}
+  {% else %}{% include "partials/_empty.html" with icon="bi-check-circle" title="No downtime records" text="Log a stoppage when a machine goes down and resolve it when it is running again." url=request.path|add:"new/" action="Log downtime" %}{% endif %}
+</div>
+{% endblock %}
