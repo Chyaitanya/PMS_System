@@ -1,5 +1,7 @@
 # Smart Textile Production Management System
 
+Created by **Chaitanya Sutrave**.
+
 A Django web application for running a textile mill floor: raw material and yarn inventory, production orders that move
 from spinning to weaving to finishing, daily targets, machine downtime, defect and rejection tracking, and printable reports.
 
@@ -56,6 +58,8 @@ Open http://127.0.0.1:8000 and sign in with **admin / admin123**.
 To start with an empty system instead, skip `seed_demo` and run `python manage.py createsuperuser`.
 Re-run `python manage.py seed_demo --reset` any time to rebuild the demo data.
 
+> **Demo account:** `seed_demo` creates the local demo login `admin / admin123`. This fixed password is for local evaluation only; never use it on a publicly accessible deployment.
+
 ## Tests
 
 ```bash
@@ -78,4 +82,4 @@ static/js/         dashboard charts (Chart.js) and small UI helpers
 ## Notes
 
 - Units: spinning output is in kg of yarn; weaving and finishing output is in metres of fabric. Order progress compares each stage against the yarn required (spinning) or the fabric planned (weaving, finishing).
-- Before deploying, set `DEBUG=False`, a long random `SECRET_KEY` and your host in `ALLOWED_HOSTS`, then run `python manage.py collectstatic` and serve static files with your web server or WhiteNoise.
+- Before deploying, set `DEBUG=False`, a long random `SECRET_KEY`, your host in `ALLOWED_HOSTS`, and production database credentials. Do not deploy the demo account or its fixed password. Run `python manage.py collectstatic` and serve static files with your web server or WhiteNoise.
